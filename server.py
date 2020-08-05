@@ -6,10 +6,10 @@ import time
 def Diffie_Hellman_Key_Exchange():
 	# Diffie Helman Key Exchange
 	s = ""
-	p = random.choice(primes)
+	p = enc.get_prime()
 	g = p
 	while (g == p):
-		g = random.choice(primes)
+		g = enc.get_prime()
 	string = "Start DH Key Exchange\np = {}\ng = {}\n".format(p, g)
 	print(string)
 	c.send(string.encode("utf-8"))	
@@ -31,17 +31,6 @@ def Diffie_Hellman_Key_Exchange():
 	print()
 	return secret
 
-primes = [3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97
-		,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179
-		,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269
-		,271,277,281,283,293,307,311,313,317,331,337,347,349,353,359,367
-		,373,379,383,389,397,401,409,419,421,431,433,439,443,449,457,461
-		,463,467,479,487,491,499,503,509,521,523,541,547,557,563,569,571
-		,577,587,593,599,601,607,613,617,619,631,641,643,647,653,659,661
-		,673,677,683,691,701,709,719,727,733,739,743,751,757,761,769,773
-		,787,797,809,811,821,823,827,829,839,853,857,859,863,877,881,883
-		,887,907,911,919,929,937,941,947,953,967,971,977,983,991,997]
-
 # Set up the TCP Server
 s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 s.bind( (socket.gethostname(), 1234 ) )
@@ -54,47 +43,55 @@ print()
 key = Diffie_Hellman_Key_Exchange()
 
 # Exchange n for Blum Gold
-r_msg = "Hello"
-msg = ""
-while(r_msg != msg):
-	p = random.choice(primes)
-	q = p 
-	while (p == q):
-		q = random.choice(primes)
-	if(p < q):
-		temp = p
-		p = q
-		q = temp
-	b, a = enc.Euclidean(p, q)
-	n = p * q
-	time.sleep(.5)
-	send = str(n)
-	c.send(send.encode())
 
-	# Decrypt
-	data = c.recv(1024).decode()
-	msg = enc.Blum_Gold_Decrpyt(n, a, b, p, q, data )
-	if(msg == r_msg):
-		print("Exchange Complete\n")
-		send = "Exchange Complete"
-		c.send(send.encode())
-		break
-	else:
-		send = "error"
-		c.send(send.encode())
+# Send over bank's public key
+n, a, b, p, q = enc.get_Blum_Gold_Keys()
+print("Sending over public key n:", n)
+send = str(n)
+c.send(send.encode("utf-8"))
+
+# Get ATM's public key
+msg = c.recv(1024).decode()
+n_ATM = int(msg)
+print("Recieved ATM's public key:", n_ATM)
 
 # Read the Messages from the ATM
 while(True):
+	# Get the message
 	data = c.recv(1024).decode()
 	print("Recieved:", data)
-	msg = enc.Blum_Gold_Decrpyt(n, a, b, p, q, data )
+	# Decrypt
+	msg = enc.Blum_Gold_Decrypt(n, a, b, p, q, data )
+	# Get the mac the ATM send over
 	user_mac = enc.parse_mac(data)
-	print("user_mac is", user_mac)
+	# Get the mac of the message
 	mac = enc.getMAC(msg, key)
-	print("mac is", mac)
-	print("After Decription:", msg)
+	message = msg[:msg.index("-")]
+	print(message)
+	# Get the time stap of the message
+	time_msg = int( msg[msg.index("-") + 1:])
 
-	if(mac == user_mac):
-		print("Verified that the MAC is correct")
-	print()
+	# Check that the MAC and TimeStamp Match
+	if(mac == user_mac and (time_msg < time.time() + 1)):
+		# DO BANK STUFF HERE
+		send = "Verified that it is in fact you"	# <== Delete Later
+	else:
+		send = "Could not verify that it is you"
+
+	# Attach the time stamp to the message
+	send = send + " -" + str(int(time.time()))
+	# Return an Encypted message
+	x0 = random.randint(100001, 1000001 )
+	# Get the mac
+	mac = enc.getMAC(send, key)						# <== USE OTHER MAC ALGORITHM
+	send = enc.Blum_Gold_Encrypt(n_ATM, x0, send )	
+	send = send + " MAC = " + mac
+	c.send(send.encode())
+	print("Sent reply to ATM\n")
+	if(message == "Quit "):
+		break
+
+c.close()
+s.close()
+print("Closed Server")
 

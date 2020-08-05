@@ -1,5 +1,16 @@
 import math
+import random
 import SDES
+
+# Get primes from seperate file
+file = open("primes1.txt","r")
+read = file.read()
+primes = read.split()
+
+# Return a random prime
+def get_prime():
+	val = int( random.choice(primes) )
+	return val
 
 # Parse and get p and g
 # Return tuple (p, g)
@@ -106,10 +117,8 @@ def binary_as_string(binary):
 		string += str(i)
 	return string
 
-def Blum_Gold_Encypt(n, key, string):
-	# Hard Coded Variables Given in Example
-	x0 = key
-	# n is p*q
+# Do the Blum Goldwasser Encrpytion
+def Blum_Gold_Encrypt(n, x0, string):
 	# Calculate k floor( lg n )
 	k = math.floor( math.log( n, 2 ) ) # lg is log_2
 	h = math.floor( math.log( k, 2 ) )
@@ -147,7 +156,8 @@ def Blum_Gold_Encypt(n, key, string):
 	return str((string, ciphertext[-1]))
 	# END OF ENCRYPTION PART -----------------------------------------------------------------
 
-def Blum_Gold_Decrpyt(n, a, b, p, q, string):
+# Decrypt using Blum Goldwasser
+def Blum_Gold_Decrypt(n, a, b, p, q, string):
 	binary = []
 	start = False
 	for i in string:
@@ -168,8 +178,6 @@ def Blum_Gold_Decrpyt(n, a, b, p, q, string):
 	h = math.floor( math.log( k, 2 ) )
 	# Get t --> number of m in the string
 	t = len(binary) // h
-
-	
 
 	d1 = mod( (p+1)//4, t+1, p-1)			# Formula from Notes
 	d2 = mod( (q+1)//4, t+1, q-1)			# Formula from Notes
@@ -199,6 +207,31 @@ def Blum_Gold_Decrpyt(n, a, b, p, q, string):
 	string = convert_binary_to_string(decryption)
 	return string
 
+# Returns (n, a, b, p, q)
+def get_Blum_Gold_Keys():
+	r_msg = "Hello"
+	msg = ""
+	while(r_msg != msg):
+		p = get_prime()
+		q = p 
+		while (p == q):
+			q = get_prime()
+		if(p < q):
+			temp = p
+			p = q
+			q = temp
+		b, a = Euclidean(p, q)
+		n = p * q
+		# Encrypt
+		x0 = random.randint(100001, 1000001 )
+		cipher = Blum_Gold_Encrypt(n, x0, r_msg )
+		# Decrypt
+		msg = Blum_Gold_Decrypt(n, a, b, p, q, cipher )
+		if(msg == r_msg):
+			break
+	return (n, a, b, p, q)
+
+# Returns a and p such that pa + qb = 1
 def Euclidean(p, q):
 	r = p % q 
 	d = p // q
@@ -229,7 +262,7 @@ def Euclidean(p, q):
 		q = r
 	return (b, a)
 
-# Gets the MAC
+# # Gets the MAC
 def getMAC(string, key_val):
 
 	binary = convert_string_to_binary(string) # Binary Sequence of the string
@@ -258,6 +291,7 @@ def getMAC(string, key_val):
 		string += str(i)
 	return string
 
+# Get the MAC from the Message, check to see if it is valid
 def parse_mac(string):
 	index = string.index("MAC =")
 	start = False
@@ -268,3 +302,4 @@ def parse_mac(string):
 		if(string[i].isdigit() and start):
 			mac += string[i]
 	return mac
+
