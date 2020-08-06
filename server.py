@@ -2,6 +2,8 @@ import socket
 import random
 import encryptions as enc
 import time
+import Bank
+import mac
 
 def Diffie_Hellman_Key_Exchange():
 	# Diffie Helman Key Exchange
@@ -55,6 +57,8 @@ msg = c.recv(1024).decode()
 n_ATM = int(msg)
 print("Recieved ATM's public key:", n_ATM)
 
+bank = Bank.Bank()
+
 # Read the Messages from the ATM
 while(True):
 	# Get the message
@@ -67,14 +71,28 @@ while(True):
 	# Get the mac of the message
 	mac = enc.getMAC(msg, key)
 	message = msg[:msg.index("-")]
-	print(message)
 	# Get the time stap of the message
 	time_msg = int( msg[msg.index("-") + 1:])
 
 	# Check that the MAC and TimeStamp Match
 	if(mac == user_mac and (time_msg < time.time() + 1)):
-		# DO BANK STUFF HERE
-		send = "Verified that it is in fact you"	# <== Delete Later
+		returnVal = -1
+
+		if msg[0:7] == "Deposit":
+			returnVal = bank.deposit(float(msg[8:msg.index("-")-1]))
+		elif msg[0:8] == "Withdraw":
+			returnVal = bank.withdraw(float(msg[9:msg.index("-")-1]))
+		elif msg[0:13] == "Check Balance":
+			returnVal = bank.queryBalance()
+			print(returnVal)
+		elif msg == "Quit":
+			send = "Quit"
+
+		if returnVal == -1:
+			send = "Transaction unsuccessful"
+		else:
+			send = "Transaction successeful. Balance: " + str(returnVal)
+		#send = "Transaction successeful. Balance: " + str(returnVal)
 	else:
 		send = "Could not verify that it is you"
 

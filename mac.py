@@ -90,9 +90,11 @@ def sha1(message):
 
 # main function to receive an HMAC, call with a key and the message to authenticate
 # should only be calling this function from any other classes, all the others in this class are helper functions
-def mac(key, message):
+def mac(keyInt, message):
+	# convert key to binary and message to binary
+	k = bin(keyInt)[2:]
 
-	# if key is longer than block sie(64) then hash it
+	# if key is longer than block size(64) then hash it
 	if len(k) > 64:
 		sha1(k)
 
@@ -108,14 +110,18 @@ def mac(key, message):
 
 	# xor key with corresponding pad  (both in int form) and convert back to binary string
 	oPadKey = int(k, 2) ^ int(oPad, 2)
-	oPadKey = bin(oPadKey)[2:].zfill(64)
+	oPadKey = bin(oPadKey)[2:]
 
 	iPadKey = int(k, 2) ^ int(iPad, 2)
-	iPadKey = bin(iPadKey)[2:].zfill(64)
+	iPadKey = bin(iPadKey)[2:]
+
+	#print(iPadKey)
+	#print(message)
 
 	# The HMAC is the hash of the outer key concatenated with 
 	# the hash of the inner key concatenated with the message
-	return sha1(oKeyPad + sha1(iPadKey + message))
+	innerConcatenate = bin(sha1(iPadKey + message))[2:]
+	return sha1(oPadKey + innerConcatenate)
 
 if __name__ == "__main__":
 	# dont run this file, only use the hmac function
@@ -127,4 +133,6 @@ if __name__ == "__main__":
 	print(leftRotate(int(x,2), 4))
 
 	ans = sha1('01110100011001010111001101110100')
-	print(bin(ans)[2:])
+	#print(bin(ans)[2:])
+
+	print(bin(mac(0, "0"))[2:])

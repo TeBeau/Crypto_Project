@@ -2,6 +2,7 @@ import socket
 import random
 import encryptions as enc
 import time
+import mac
 
 # This function does the Diffie_Hellman Key Exchange Protocol
 def Diffie_Hellman_Key_Exchange():
@@ -50,6 +51,10 @@ print("Sending over public key n:", n)
 s.send(send.encode())
 print()
 
+# will use this bool to find if uder overdraws
+withdrawFlag = False;
+quitFlag = False
+
 run = True
 while run:
 	# Get the instuction, only 4 instructions exist
@@ -60,9 +65,12 @@ while run:
 		# Get the amount
 		amount = input("Enter the amount you wish to deposit or withdraw:\n")
 		message = message + " " + amount
+
+		withdrawFlag = True
 	elif(message == "Quit"):
 		# Don't break out yet, need to tell server we are quitting
 		run = False
+		quitFlag = True
 	else:
 		print("Invalid input... Must match exact instructions")
 		continue;
@@ -82,6 +90,8 @@ while run:
 
 	# Recieve Response
 	data = s.recv(1024).decode("utf-8")
+	if quitFlag == False:
+		print(data)
 	msg = enc.Blum_Gold_Decrypt(n, a, b, p, q, data)
 	# Look at MAC recieved from the BANK
 	user_mac = enc.parse_mac(data)
@@ -90,10 +100,17 @@ while run:
 	message = msg[:msg.index("-")]
 	# Get the TimeStamp
 	time_msg = int( msg[msg.index("-") + 1:])
+
+	# if user said 'Quit', don't print out any message verification stuff
+	if quitFlag == True:
+		break
 	# Check that the MAC and TimeStamp Match
 	if(mac == user_mac and (time_msg < time.time() + 1)):
 		print("Verified message from the Bank:")
 		print(message)
+		if withdrawFlag == True and message == "Transaction unsuccessful ":
+			print("ERROR: Overdraw")
+			withdrawFlag = False
 	else:
 		print("Could not verify the message from the Bank")
 	print()
