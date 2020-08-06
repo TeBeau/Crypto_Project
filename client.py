@@ -38,13 +38,16 @@ users['Lauren']= 101
 users['Alex']= 97
 users['JJ']= 79
 
-username= input("Input your username:")
-pin= int(input("Input your pin#:"))
-if users[username]==pin:
-	continue
-else:
-	print("Error: wrong pin #")
-	exit()
+right_pin=False
+
+while(!right_pin)
+	username= input("Input your username:")
+	pin= int(input("Input your pin#:"))
+	if users[username]==pin:
+		right_pin=True
+	else:
+		print("Error: wrong pin #")
+
 
 # Diffie Hellman_Key_Exchange
 key = Diffie_Hellman_Key_Exchange()
