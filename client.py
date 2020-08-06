@@ -2,7 +2,7 @@ import socket
 import random
 import encryptions as enc
 import time
-import mac
+import mac as HMAC
 
 # This function does the Diffie_Hellman Key Exchange Protocol
 def Diffie_Hellman_Key_Exchange():
@@ -100,9 +100,9 @@ while run:
 	# Encrypt the message
 	cipher = enc.Blum_Gold_Encrypt(n_bank, x0, message )
 	# Get the MAC
-	mac = enc.getMAC(message, key)
+	mac = HMAC.mac(message, key)
 	# # Send over the Encrypted message
-	send = cipher + " MAC = " + mac
+	send = cipher + " MAC = " + mac 
 	print("Sending the ciphertext:", send)
 	s.send(send.encode())
 	print()
@@ -114,13 +114,13 @@ while run:
 	msg = enc.Blum_Gold_Decrypt(n, a, b, p, q, data)
 	# Look at MAC recieved from the BANK
 	user_mac = enc.parse_mac(data)
-	mac = enc.getMAC(msg, key)						# <== USE OTHER MAC ALGORITHM
+	mac = HMAC.mac(msg, key)		
 	# Get Just the Message
 	message = msg[:msg.index("-")]
 	# Get the TimeStamp
 	time_msg = int( msg[msg.index("-") + 1:])
 
-	# if user said 'Quit', don't print out any message verification stuff
+	# if user said 'Quit', don't print out any message verification stuff, just exit
 	if quitFlag == True:
 		break
 	# Check that the MAC and TimeStamp Match

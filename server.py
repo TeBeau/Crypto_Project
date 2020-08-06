@@ -3,7 +3,7 @@ import random
 import encryptions as enc
 import time
 import Bank
-import mac
+import mac as HMAC
 
 def Diffie_Hellman_Key_Exchange():
 	# Diffie Helman Key Exchange
@@ -69,7 +69,8 @@ while(True):
 	# Get the mac the ATM send over
 	user_mac = enc.parse_mac(data)
 	# Get the mac of the message
-	mac = enc.getMAC(msg, key)
+	mac = HMAC.mac(msg, key)
+
 	message = msg[:msg.index("-")]
 	# Get the time stap of the message
 	time_msg = int( msg[msg.index("-") + 1:])
@@ -79,9 +80,9 @@ while(True):
 		returnVal = -1
 
 		if msg[0:7] == "Deposit":
-			returnVal = bank.deposit(float(msg[8:msg.index("-")-1]))
+			returnVal = bank.deposit(round(float(msg[8:msg.index("-")-1]), 2))
 		elif msg[0:8] == "Withdraw":
-			returnVal = bank.withdraw(float(msg[9:msg.index("-")-1]))
+			returnVal = bank.withdraw(round(float(msg[9:msg.index("-")-1]), 2))
 		elif msg[0:13] == "Check Balance":
 			returnVal = bank.queryBalance()
 			print(returnVal)
@@ -101,7 +102,7 @@ while(True):
 	# Return an Encypted message
 	x0 = random.randint(100001, 1000001 )
 	# Get the mac
-	mac = enc.getMAC(send, key)						# <== USE OTHER MAC ALGORITHM
+	mac = HMAC.mac(send, key)					
 	send = enc.Blum_Gold_Encrypt(n_ATM, x0, send )	
 	send = send + " MAC = " + mac
 	c.send(send.encode())

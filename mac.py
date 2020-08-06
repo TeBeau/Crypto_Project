@@ -1,3 +1,5 @@
+import encryptions as enc
+
 #helper function to split message into chunks of n size
 def createMessageChunks(message, n):
 	word_list = []
@@ -72,7 +74,7 @@ def sha1(message):
 				f = b ^ c ^ d
 				k = int("0xCA62C1D6", 16)
 
-			temp = leftRotate(a, 5) + f + e + k + w[i]
+			temp = leftRotate(a, 5) + f + e + k + w[i] & 0xffffffff
 			e = d
 			d = c
 			c = leftRotate(b, 30)
@@ -90,7 +92,11 @@ def sha1(message):
 
 # main function to receive an HMAC, call with a key and the message to authenticate
 # should only be calling this function from any other classes, all the others in this class are helper functions
-def mac(keyInt, message):
+def mac(message, keyInt):
+	message = ""
+	for i in enc.convert_string_to_binary(message):
+		message = message + i
+	print(message)
 	# convert key to binary and message to binary
 	k = bin(keyInt)[2:]
 
@@ -121,7 +127,7 @@ def mac(keyInt, message):
 	# The HMAC is the hash of the outer key concatenated with 
 	# the hash of the inner key concatenated with the message
 	innerConcatenate = bin(sha1(iPadKey + message))[2:]
-	return sha1(oPadKey + innerConcatenate)
+	return bin(sha1(oPadKey + innerConcatenate))[2:]
 
 if __name__ == "__main__":
 	# dont run this file, only use the hmac function
@@ -132,7 +138,11 @@ if __name__ == "__main__":
 
 	print(leftRotate(int(x,2), 4))
 
-	ans = sha1('01110100011001010111001101110100')
+	#ans = sha1('01110100011001010111001101110100')
 	#print(bin(ans)[2:])
 
-	print(bin(mac(0, "0"))[2:])
+	#print(bin(mac(0, "0"))[2:])
+
+	ans = hex(mac("0", 0))[2:]
+	print(ans)
+	print(len(ans))
