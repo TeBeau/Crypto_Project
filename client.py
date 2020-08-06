@@ -41,7 +41,7 @@ users['JJ']= 79
 
 right_pin=False
 
-while(!right_pin)
+while right_pin == False:
 	username= input("Input your username:")
 	pin= int(input("Input your pin#:"))
 	if username in users:
