@@ -34,6 +34,25 @@ def Diffie_Hellman_Key_Exchange():
 s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 s.connect( (socket.gethostname(), 1234) )
 
+users= dict()
+users['Lauren']= 101
+users['Alex']= 97
+users['JJ']= 79
+
+right_pin=False
+
+while(!right_pin)
+	username= input("Input your username:")
+	pin= int(input("Input your pin#:"))
+	if username in users:
+		if users[username]==pin:
+			right_pin=True
+		else:
+			print("Error: wrong pin #")
+	if username not in users:
+		print("Error: wrong username")
+
+
 # Diffie Hellman_Key_Exchange
 key = Diffie_Hellman_Key_Exchange()
 
