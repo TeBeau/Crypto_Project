@@ -6,7 +6,7 @@ def createMessageChunks(message, n):
 	word = ""
 
 	i = 0
-	while (True):
+	for i in range(len(message)):
 		if i % n == 0 and i != 0:
 			word_list.append(word)
 			word = ""
@@ -14,6 +14,8 @@ def createMessageChunks(message, n):
 				break
 		word = word + message[i]
 		i += 1
+	if word != "":
+		word_list.append(word)
 
 	return word_list
 
@@ -143,6 +145,6 @@ if __name__ == "__main__":
 
 	#print(bin(mac(0, "0"))[2:])
 
-	ans = hex(mac("0", 0))[2:]
+	ans = mac("0", 0)
 	print(ans)
 	print(len(ans))
