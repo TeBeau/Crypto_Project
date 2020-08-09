@@ -270,8 +270,6 @@ def decrypt(m, k):
 			plain = plain[j*8:]
 
 		message += plain
-		#if (i+1)*64 > len(m):
-			#break
 		i += 1
 
 	
@@ -279,49 +277,11 @@ def decrypt(m, k):
 	return bin_to_string(message)
 
 
-if __name__ == "__main__":
-
-	message = "1001011001101001010100010100101001101001101010101000000101101011"
-
-	key     = "1001001010111011110110100010110100110101011011101001001010010000"
-	"""
-
-	ciphertext = tripleDES(message, key, True)
-	print("CIPHER:", ciphertext)
-	plaintext = tripleDES(ciphertext, key, False)
-	print("PLAIN: ", plaintext)
-	print("ORIGIN:", message)
-	"""
-	print("----------------------------------------------\n\n")
-
-	message = "cryptography sucks"
-	print(string_to_bin(message))
-	print(bin_to_string(string_to_bin(message)))
-
-	print("CIPHER:", des(string_to_bin(message), key, True))
-	print("PLAIN: ", des(des(string_to_bin(message), key, True), key, False))
-	print("PLAIN: ", string_to_bin(message))
-	print("\n\n")
-
-
-	print("PLAIN: ", string_to_bin(message))
-	ciphertext = encrypt(message, int(key,2))
-	print("CIPHER:", ciphertext)
-	plaintext = decrypt(ciphertext, int(key,2))
-	print("PLAIN: ", plaintext)
-
-
-
-
-
-
-
-
-
-
-def tripleDES(m, k, encryptFlag):
+def encrypt3(m, k):
 	# seed the random generator with the key so that each key will always generate the same three 64-bit keys
-	random.seed(int(k,2))
+	random.seed(k)
+
+	m = string_to_bin(m)
 
 	keys = []
 	for i in range(3):
@@ -330,25 +290,89 @@ def tripleDES(m, k, encryptFlag):
 			tempKey += str(random.randint(0,1))
 		keys.append(tempKey)
 
-	chunks = createMessageChunks(m, 64)
+	i = 0
 	message = ""
-	for i in chunks:
-		if len(i) < 64:
-			i.zfill(64)
+	while True:
+		chunk = m[i*64:(i+1)*64]
 
-		step1 = des(keys[0], i, encryptFlag)
-		if encryptFlag == True:
-			step2 = des(keys[1], step1, False)
-		else:
-			step2 = des(keys[1], step1, True)
-		step3 = des(keys[2], step2, encryptFlag)
+		if chunk == "" or chunk == " ":
+			break
+		step1 = des(chunk.zfill(64), keys[0], True)
+		step2 = des(step1, keys[1], False)
+		step3 = des(step2, keys[2], True)
+
 		message += step3
-
-	# strip the leading 0's if decrpyting, since they were added in encryption
-	if encryptFlag == False:
-		i = 0
-		while message[i] == '0':
-			message = message[1:]
-			i+= 1
+		if (i+1)*64 > len(m):
+			break
+		i += 1
 
 	return message
+
+def decrypt3(m, k):
+	random.seed(k)
+
+	keys = []
+	for i in range(3):
+		tempKey = ""
+		for i in range(64):
+			tempKey += str(random.randint(0,1))
+		keys.append(tempKey)
+
+	i = 0
+	message = ""
+	while True:
+		chunk = m[i*64:(i+1)*64]
+		if chunk == "" or chunk == " ":
+			break
+
+		step1 = des(chunk, keys[2], False)
+		step2 = des(step1, keys[1], True)
+		step3 = des(step2, keys[0], False)
+
+		if (i+1)*64 >= len(m):
+			j = 0
+			while step3[8*j:8*(j+1)] == "00000000":
+				j+= 1
+			step3 = step3[j*8:]
+
+		message += step3
+		i += 1
+
+	return bin_to_string(message)
+
+
+
+if __name__ == "__main__":
+
+	message = "1001011001101001010100010100101001101001101010101000000101101011"
+
+	key     = "1001001010111011110110100010110100110101011011101001001010010000"
+	
+
+	message = "cryptozz"
+	ciphertext = encrypt3(message, key)
+	print("CIPHER:", ciphertext)
+	plaintext = decrypt3(ciphertext, key)
+	print("PLAIN: ", plaintext)
+	print("ORIGIN:", message)
+	
+	print("----------------------------------------------\n\n")
+
+	message = "cryptography sucks"
+	print(string_to_bin(message))
+	print(bin_to_string(string_to_bin(message)))
+
+
+	print("PLAIN: ", string_to_bin(message))
+	ciphertext = encrypt(message, int(key,2))
+	print("CIPHER:", ciphertext)
+	plaintext = decrypt(ciphertext, int(key,2))
+	print("PLAIN: ", plaintext)
+
+	print("----------------------------------------------\n\n")
+
+	ciphertext = encrypt3(message, key)
+	print("CIPHER:", ciphertext)
+	plaintext = decrypt3(ciphertext, key)
+	print("PLAIN: ", plaintext)
+	print("ORIGIN:", message)
