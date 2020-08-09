@@ -276,7 +276,7 @@ def decrypt(m, k):
 
 	
 
-	return message
+	return bin_to_string(message)
 
 
 if __name__ == "__main__":
@@ -309,7 +309,6 @@ if __name__ == "__main__":
 	print("CIPHER:", ciphertext)
 	plaintext = decrypt(ciphertext, int(key,2))
 	print("PLAIN: ", plaintext)
-	print(bin_to_string(plaintext))
 
 
 
