@@ -44,8 +44,10 @@ print()
 # Key Exchange for SSL
 key = Diffie_Hellman_Key_Exchange()
 
-# Exchange n for Blum Gold
+name = c.recv(1024).decode()
+select = c.recv(1024).decode()
 
+# Exchange n for Blum Gold
 # Send over bank's public key
 n, a, b, p, q = enc.get_Blum_Gold_Keys()
 print("Sending over public key n:", n)
@@ -57,7 +59,7 @@ msg = c.recv(1024).decode()
 n_ATM = int(msg)
 print("Recieved ATM's public key:", n_ATM)
 
-bank = Bank.Bank('Name')	# <== Put the ATM users name here
+bank = Bank.Bank(name)	# <== Put the ATM users name here
 
 # Read the Messages from the ATM
 while(True):
@@ -65,7 +67,12 @@ while(True):
 	data = c.recv(1024).decode()
 	print("Recieved:", data)
 	# Decrypt
-	msg = enc.Blum_Gold_Decrypt(n, a, b, p, q, data )
+	if(select == "BLUM"):
+		msg = enc.Blum_Gold_Decrypt(n, a, b, p, q, data )
+	else:
+		# DES HERE
+		pass
+
 	# Get the mac the ATM send over
 	user_mac = enc.parse_mac(data)
 	# Get the mac of the message
@@ -102,8 +109,13 @@ while(True):
 	# Return an Encypted message
 	x0 = random.randint(100001, 1000001 )
 	# Get the mac
-	mac = HMAC.mac(send, key)					
-	send = enc.Blum_Gold_Encrypt(n_ATM, x0, send )	
+	mac = HMAC.mac(send, key)
+	if( select == "BLUM" ):					
+		send = enc.Blum_Gold_Encrypt(n_ATM, x0, send )
+	else:
+		# DO DES HERE
+		pass
+
 	send = send + " MAC = " + mac
 	c.send(send.encode())
 	print("Sent reply to ATM\n")

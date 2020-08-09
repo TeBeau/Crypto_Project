@@ -41,6 +41,7 @@ users['Alex'] = 9742
 users['JJ'] = 7959
 # Assume this is Completely Hidden
 
+# Ask the user to enter username (equivalent to inserting card) and pin
 right_pin=False
 while right_pin == False:
 	username= input("Input your username:")
@@ -57,6 +58,11 @@ while right_pin == False:
 # Diffie Hellman_Key_Exchange
 key = Diffie_Hellman_Key_Exchange()
 
+
+select = random.choice(["DES", "BLUM"])
+s.send(username.encode())
+s.send(select.encode())
+
 # Blum Goldwasser Key Exchange
 
 # Get public key from the bank
@@ -64,14 +70,15 @@ msg = s.recv(1024).decode("utf-8")
 n_bank = int(msg)
 print("Recieved public key from Bank: {}".format(n_bank) )
 
-# Send over public ket for the bank
+# Send over public key for the bank
 n, a, b, p, q = enc.get_Blum_Gold_Keys()
 send = str(n)
 print("Sending over public key n:", n)
 s.send(send.encode())
 print()
 
-# will use this bool to find if uder overdraws
+
+# will use this bool to find if under overdraws
 withdrawFlag = False;
 quitFlag = False
 
@@ -99,7 +106,12 @@ while run:
 	# Gererate random quadratic residuosity
 	x0 = random.randint(100001, 1000001 )
 	# Encrypt the message
-	cipher = enc.Blum_Gold_Encrypt(n_bank, x0, message )
+	if( select == "BLUM" ):
+		cipher = enc.Blum_Gold_Encrypt(n_bank, x0, message )
+	else:
+		# DO DES HERE
+		pass
+
 	# Get the MAC
 	mac = HMAC.mac(message, key)
 	# # Send over the Encrypted message
@@ -112,7 +124,12 @@ while run:
 	data = s.recv(1024).decode("utf-8")
 	if quitFlag == False:
 		print(data)
-	msg = enc.Blum_Gold_Decrypt(n, a, b, p, q, data)
+	if( select == "BLUM"):
+		msg = enc.Blum_Gold_Decrypt(n, a, b, p, q, data)
+	else:
+		# DO DES HERE
+		pass
+	
 	# Look at MAC recieved from the BANK
 	user_mac = enc.parse_mac(data)
 	mac = HMAC.mac(msg, key)		
