@@ -57,7 +57,7 @@ msg = c.recv(1024).decode()
 n_ATM = int(msg)
 print("Recieved ATM's public key:", n_ATM)
 
-bank = Bank.Bank()
+bank = Bank.Bank('Name')	# <== Put the ATM users name here
 
 # Read the Messages from the ATM
 while(True):
