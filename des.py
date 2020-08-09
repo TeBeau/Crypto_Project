@@ -1,8 +1,7 @@
-import mac
 import random
+import encryptions as enc
 
-# Usage: call the singleDES or the tripleDES functions, with the message, and the shared key between the client and the server (in int form)
-# and the third argument should be 'True' if encrypting and 'False' when decrypting
+# Usage: call the encrypt or the decrypt functions, with the message in regular string format, and the shared key between the client and the server (in int form)
 
 initial_perm = [58, 50,	42,	34,	26,	18,	10,	2, 
 				60, 52, 44, 36, 28, 20, 12, 4,
@@ -89,6 +88,45 @@ sboxes = [[[14, 4,  13, 1,  2,  15, 11, 8,  3,  10, 6,  12, 5,  9,  0,  7 ],
 		   [1,  15, 13, 8,  10, 3,  7,  4,  12, 5,  6,  11, 0,  14, 9,  2 ],
 		   [7,  11, 4,  1,  9,  12, 14,	2,  0,  6,  10, 13, 15, 3,  5,  8 ],
 		   [2,  1,  14, 7,  4,  10, 8,  13, 15, 12, 9,  0,  3,  5,  6,  11]]]
+
+
+def createMessageChunks(message, n):
+	word_list = []
+	word = ""
+
+	for i in range(len(message)):
+		if i % n == 0 and i != 0:
+			word_list.append(word)
+			word = ""
+		word = word + message[i]
+	if word != "" and word != " ":
+		word_list.append(word)
+	return word_list
+
+def BinaryToDecimal(binary):  
+         
+    binary1 = binary  
+    decimal, i, n = 0, 0, 0
+    while(binary != 0):  
+        dec = binary % 10
+        decimal = decimal + dec * pow(2, i)  
+        binary = binary//10
+        i += 1
+    return (decimal)
+
+def bin_to_string(bin_data):
+	str_data = ""
+	for i in range(0, len(bin_data), 8):
+		temp_data = int(bin_data[i:i + 8])
+		decimal_data = BinaryToDecimal(temp_data)
+		str_data = str_data + chr(decimal_data)
+	return str_data
+
+def string_to_bin(string):
+	binStr = ""
+	for i in string:
+		binStr += bin(ord(i))[2:].zfill(8)
+	return binStr
 
 def permute(text, table):
 	perm = ""
@@ -186,32 +224,101 @@ def des(message, key, encryptFlag):
 
 	return final
 
-def singleDES(m, k, encryptFlag):
-	# turn the message into a binary string and parse it into 64 bit chunks
-	chunks = mac.createMessageChunks(m, 64)
+def encrypt(m, k):
+	m = string_to_bin(m)
 
-	# parse the key into a 64 bit binary string
 	key = bin(k)[2:]
 	if len(key) > 64:
 		key = key[len(key)-64:]
 	while len(key) < 64:
 		key = key + '0'
 
-	#encrypt/decrypt eacch chunk and add together
+	i = 0
 	message = ""
-	for i in chunks:
-
-		cipher = des(i.zfill(64), key, encryptFlag)
-		message = message + cipher
-
-	# strip the leading 0's if decrpyting, since they were added in encryption
-	if encryptFlag == False:
-		i = 0
-		while message[i] == '0':
-			i+= 1
-		message = message[i:]
+	while True:
+		chunk = m[i*64:(i+1)*64]
+		if chunk == "" or chunk == " ":
+			break
+		cipher = des(chunk.zfill(64), key, True)
+		message += cipher
+		if (i+1)*64 > len(m):
+			break
+		i += 1
 
 	return message
+
+def decrypt(m, k):
+	key = bin(k)[2:]
+	if len(key) > 64:
+		key = key[len(key)-64:]
+	while len(key) < 64:
+		key = key + '0'
+
+	i = 0
+	message = ""
+	while True:
+		chunk = m[i*64:(i+1)*64]
+		if chunk == "" or chunk == " ":
+			break
+		plain = des(chunk.zfill(64), key, False)
+
+		# strip leading 0's since they should come in 8bit pairs, if this is the last block
+		if (i+1)*64 >= len(m):
+			j = 0
+			while plain[8*j:8*(j+1)] == "00000000":
+				j+= 1
+			plain = plain[j*8:]
+
+		message += plain
+		#if (i+1)*64 > len(m):
+			#break
+		i += 1
+
+	
+
+	return message
+
+
+if __name__ == "__main__":
+
+	message = "1001011001101001010100010100101001101001101010101000000101101011"
+
+	key     = "1001001010111011110110100010110100110101011011101001001010010000"
+	"""
+
+	ciphertext = tripleDES(message, key, True)
+	print("CIPHER:", ciphertext)
+	plaintext = tripleDES(ciphertext, key, False)
+	print("PLAIN: ", plaintext)
+	print("ORIGIN:", message)
+	"""
+	print("----------------------------------------------\n\n")
+
+	message = "cryptography sucks"
+	print(string_to_bin(message))
+	print(bin_to_string(string_to_bin(message)))
+
+	print("CIPHER:", des(string_to_bin(message), key, True))
+	print("PLAIN: ", des(des(string_to_bin(message), key, True), key, False))
+	print("PLAIN: ", string_to_bin(message))
+	print("\n\n")
+
+
+	print("PLAIN: ", string_to_bin(message))
+	ciphertext = encrypt(message, int(key,2))
+	print("CIPHER:", ciphertext)
+	plaintext = decrypt(ciphertext, int(key,2))
+	print("PLAIN: ", plaintext)
+	print(bin_to_string(plaintext))
+
+
+
+
+
+
+
+
+
 
 def tripleDES(m, k, encryptFlag):
 	# seed the random generator with the key so that each key will always generate the same three 64-bit keys
@@ -224,7 +331,7 @@ def tripleDES(m, k, encryptFlag):
 			tempKey += str(random.randint(0,1))
 		keys.append(tempKey)
 
-	chunks = mac.createMessageChunks(m, 64)
+	chunks = createMessageChunks(m, 64)
 	message = ""
 	for i in chunks:
 		if len(i) < 64:
@@ -246,35 +353,3 @@ def tripleDES(m, k, encryptFlag):
 			i+= 1
 
 	return message
-
-
-if __name__ == "__main__":
-	print("SHIT SON")
-	message = "1001011001101001010100010100101001101001101010101000000101101011"
-
-	key     = "1001001010111011110110100010110100110101011011101001001010010000"
-
-	#print(message)
-	ciphertext = des(message, key, True)
-	print("Cipher:", ciphertext)
-	plaintext = des(ciphertext, key, False)
-	print("Plain: ", plaintext)
-	print("Origin:", message)
-
-	print("----------------------------------------------\n\n")
-
-	ciphertext = tripleDES(message, key, True)
-	print("CIPHER:", ciphertext)
-	plaintext = tripleDES(ciphertext, key, False)
-	print("PLAIN: ", plaintext)
-	print("ORIGIN:", message)
-
-	print("----------------------------------------------\n\n")
-
-	print("fuck boi")
-	message = "1001001010101100101010110101"
-	ciphertext = singleDES(message, int(key,2), True)
-	print("CIPHER:", ciphertext)
-	plaintext = singleDES(ciphertext, int(key,2), False)
-	print("PLAIN: ", plaintext)
-	print("ORIGIN:", message)

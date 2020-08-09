@@ -6,7 +6,7 @@ def createMessageChunks(message, n):
 	word = ""
 
 	i = 0
-	for i in range(len(message)):
+	while True:
 		if i % n == 0 and i != 0:
 			word_list.append(word)
 			word = ""
@@ -14,8 +14,6 @@ def createMessageChunks(message, n):
 				break
 		word = word + message[i]
 		i += 1
-	if word != "":
-		word_list.append(word)
 
 	return word_list
 
