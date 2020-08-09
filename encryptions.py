@@ -262,35 +262,6 @@ def Euclidean(p, q):
 		q = r
 	return (b, a)
 
-# # Gets the MAC
-def getMAC(string, key_val):
-
-	binary = convert_string_to_binary(string) # Binary Sequence of the string
-	key = int_to_binary(key_val, math.log( key_val, 2 ) + 1)
-	copy = key.copy()
-	while( len(key) < 10 ):
-		temp = copy.copy()
-		for i in temp:
-			key.append(i)
-
-	# NOW GENERATE THE MAC
-	cipherbit8 = []
-	# Each Block is 8 bits
-	for i in range(0, len(binary), 8):
-		# According to the DES in CBC, we XOR the previous cipher key with the incoming block
-		if(len(cipherbit8) == 8):
-			bit8 = SDES.XOR(binary[i:i+8], cipherbit8)
-		else:
-			# For the first time, we don't though
-			bit8 = binary[i:i+8]
-		# Get the cipher for the block
-		cipherbit8 = SDES.DES(bit8, get_least_significant_bits(key, 10), 2, True)
-	# The MAC is the last block which is this one
-	string = ""
-	for i in cipherbit8:
-		string += str(i)
-	return string
-
 # Get the MAC from the Message, check to see if it is valid
 def parse_mac(string):
 	index = string.index("MAC =")
