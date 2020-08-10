@@ -46,8 +46,8 @@ users['JJ'] = 7959
 # Ask the user to enter username (equivalent to inserting card) and pin
 right_pin=False
 while right_pin == False:
-	username= input("Input your username:")
-	pin= int(input("Input your pin#:"))
+	username= input("Input your username: ")
+	pin= int(input("Input your pin#: "))
 	if username in users:
 		if users[username]==pin:
 			right_pin=True
@@ -60,7 +60,8 @@ while right_pin == False:
 # Diffie Hellman_Key_Exchange
 key = Diffie_Hellman_Key_Exchange()
 
-
+# Server Suite 
+# Randomly choose one of the following algorithms and send over to server
 select = random.choice(["DES", "BLUM", "3DES"])
 s.send(username.encode())
 s.recv(1024)
