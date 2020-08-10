@@ -212,6 +212,7 @@ def get_Blum_Gold_Keys():
 	r_msg = "Hello"
 	msg = ""
 	while(r_msg != msg):
+		# print(".")
 		p = get_prime()
 		q = p 
 		while (p == q):

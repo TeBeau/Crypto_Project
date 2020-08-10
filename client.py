@@ -3,6 +3,7 @@ import random
 import encryptions as enc
 import time
 import mac as HMAC
+import des as DES
 
 # This function does the Diffie_Hellman Key Exchange Protocol
 def Diffie_Hellman_Key_Exchange():
@@ -29,6 +30,7 @@ def Diffie_Hellman_Key_Exchange():
 	secret = enc.mod(public_b, private_a, p)
 	print()
 	return secret
+
 
 # Set up the TCP sockets to exchange messages
 s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
@@ -59,19 +61,20 @@ while right_pin == False:
 key = Diffie_Hellman_Key_Exchange()
 
 
-select = random.choice(["DES", "BLUM"])
+select = random.choice(["DES", "BLUM", "3DES"])
 s.send(username.encode())
+s.recv(1024)
 s.send(select.encode())
 
 # Blum Goldwasser Key Exchange
-
+# Generate keys
+n, a, b, p, q = enc.get_Blum_Gold_Keys()
 # Get public key from the bank
 msg = s.recv(1024).decode("utf-8")
 n_bank = int(msg)
 print("Recieved public key from Bank: {}".format(n_bank) )
 
 # Send over public key for the bank
-n, a, b, p, q = enc.get_Blum_Gold_Keys()
 send = str(n)
 print("Sending over public key n:", n)
 s.send(send.encode())
@@ -108,9 +111,11 @@ while run:
 	# Encrypt the message
 	if( select == "BLUM" ):
 		cipher = enc.Blum_Gold_Encrypt(n_bank, x0, message )
+	elif( select == "DES" ):
+		cipher = DES.encrypt( message, key )
 	else:
-		# DO DES HERE
-		pass
+		# 3 DES
+		cipher = DES.encrypt3( message, key )
 
 	# Get the MAC
 	mac = HMAC.mac(message, key)
@@ -122,13 +127,18 @@ while run:
 
 	# Recieve Response
 	data = s.recv(1024).decode("utf-8")
+
+	data_no_mac = data[:data.index("M") - 1]
+	# print(data_no_mac)
 	if quitFlag == False:
 		print(data)
 	if( select == "BLUM"):
 		msg = enc.Blum_Gold_Decrypt(n, a, b, p, q, data)
+	elif( select == "DES" ):
+		msg = DES.decrypt( data_no_mac, key )
 	else:
-		# DO DES HERE
-		pass
+		# 3 DES
+		msg = DES.decrypt3( data_no_mac, key )
 	
 	# Look at MAC recieved from the BANK
 	user_mac = enc.parse_mac(data)

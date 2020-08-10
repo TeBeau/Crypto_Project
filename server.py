@@ -4,6 +4,7 @@ import encryptions as enc
 import time
 import Bank
 import mac as HMAC
+import des as DES
 
 def Diffie_Hellman_Key_Exchange():
 	# Diffie Helman Key Exchange
@@ -33,6 +34,7 @@ def Diffie_Hellman_Key_Exchange():
 	print()
 	return secret
 
+
 # Set up the TCP Server
 s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 s.bind( (socket.gethostname(), 1234 ) )
@@ -45,15 +47,19 @@ print()
 key = Diffie_Hellman_Key_Exchange()
 
 name = c.recv(1024).decode()
+c.send("recieved".encode())
 select = c.recv(1024).decode()
+print("Account:", name)
+print("Algo:", select)
 
 # Exchange n for Blum Gold
 # Send over bank's public key
+# Generate Keys
 n, a, b, p, q = enc.get_Blum_Gold_Keys()
 print("Sending over public key n:", n)
 send = str(n)
 c.send(send.encode("utf-8"))
-
+s
 # Get ATM's public key
 msg = c.recv(1024).decode()
 n_ATM = int(msg)
@@ -65,13 +71,16 @@ bank = Bank.Bank(name)	# <== Put the ATM users name here
 while(True):
 	# Get the message
 	data = c.recv(1024).decode()
+	data_no_mac = data[:data.index("M") - 1]
 	print("Recieved:", data)
 	# Decrypt
 	if(select == "BLUM"):
 		msg = enc.Blum_Gold_Decrypt(n, a, b, p, q, data )
+	elif( select == "DES" ):
+		msg = DES.decrypt( data_no_mac, key )
 	else:
-		# DES HERE
-		pass
+		# 3 DES
+		msg = DES.decrypt3( data_no_mac, key )
 
 	# Get the mac the ATM send over
 	user_mac = enc.parse_mac(data)
@@ -112,9 +121,11 @@ while(True):
 	mac = HMAC.mac(send, key)
 	if( select == "BLUM" ):					
 		send = enc.Blum_Gold_Encrypt(n_ATM, x0, send )
+	elif( select == "DES" ):
+		send = DES.encrypt( send, key )
 	else:
-		# DO DES HERE
-		pass
+		# 3 DES
+		send = DES.encrypt3( send, key )
 
 	send = send + " MAC = " + mac
 	c.send(send.encode())
