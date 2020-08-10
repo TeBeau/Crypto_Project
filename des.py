@@ -294,10 +294,17 @@ def encrypt3(m, k):
 	message = ""
 	while True:
 		chunk = m[i*64:(i+1)*64]
-
 		if chunk == "" or chunk == " ":
 			break
-		step1 = des(chunk.zfill(64), keys[0], True)
+
+		if len(chunk) < 64:
+			num = (64 - len(chunk))//8
+			numString = bin(num)[2:].zfill(8)
+			
+			for j in range(num):
+				chunk += numString
+			
+		step1 = des(chunk, keys[0], True)
 		step2 = des(step1, keys[1], False)
 		step3 = des(step2, keys[2], True)
 
@@ -321,6 +328,7 @@ def decrypt3(m, k):
 	i = 0
 	message = ""
 	while True:
+		plaintext = ""
 		chunk = m[i*64:(i+1)*64]
 		if chunk == "" or chunk == " ":
 			break
@@ -330,12 +338,17 @@ def decrypt3(m, k):
 		step3 = des(step2, keys[0], False)
 
 		if (i+1)*64 >= len(m):
-			j = 0
-			while step3[8*j:8*(j+1)] == "00000000":
-				j+= 1
-			step3 = step3[j*8:]
+			num = step3[56:64]
+			padding = int(num, 2)
+			if padding < 8:
+				plaintext = step3[:64 - (8*padding)]
+			else:
+				plaintext = step3
 
-		message += step3
+		else:
+			plaintext = step3
+
+		message += plaintext
 		i += 1
 
 	return bin_to_string(message)
