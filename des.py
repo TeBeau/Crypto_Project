@@ -239,7 +239,15 @@ def encrypt(m, k):
 		chunk = m[i*64:(i+1)*64]
 		if chunk == "" or chunk == " ":
 			break
-		cipher = des(chunk.zfill(64), key, True)
+
+		if len(chunk) < 64:
+			num = (64 - len(chunk))//8
+			numString = bin(num)[2:].zfill(8)
+			
+			for j in range(num):
+				chunk += numString
+
+		cipher = des(chunk, key, True)
 		message += cipher
 		if (i+1)*64 > len(m):
 			break
@@ -257,19 +265,24 @@ def decrypt(m, k):
 	i = 0
 	message = ""
 	while True:
+		plaintext = ""
 		chunk = m[i*64:(i+1)*64]
 		if chunk == "" or chunk == " ":
 			break
-		plain = des(chunk.zfill(64), key, False)
+		plain = des(chunk, key, False)
 
-		# strip leading 0's since they should come in 8bit pairs, if this is the last block
 		if (i+1)*64 >= len(m):
-			j = 0
-			while plain[8*j:8*(j+1)] == "00000000":
-				j+= 1
-			plain = plain[j*8:]
+			num = plain[56:64]
+			padding = int(num, 2)
+			if padding < 8:
+				plaintext = plain[:64 - (8*padding)]
+			else:
+				plaintext = plain
 
-		message += plain
+		else:
+			plaintext = plain
+
+		message += plaintext
 		i += 1
 
 	
@@ -371,7 +384,7 @@ if __name__ == "__main__":
 	
 	print("----------------------------------------------\n\n")
 
-	message = "cryptography sucks"
+	message = "cryptography is hard"
 	print(string_to_bin(message))
 	print(bin_to_string(string_to_bin(message)))
 
@@ -384,8 +397,16 @@ if __name__ == "__main__":
 
 	print("----------------------------------------------\n\n")
 
-	ciphertext = encrypt3(message, key)
+	ciphertext = encrypt3(message, int(key,2))
 	print("CIPHER:", ciphertext)
-	plaintext = decrypt3(ciphertext, key)
+	plaintext = decrypt3(ciphertext, int(key,2))
+	print("PLAIN: ", plaintext)
+	print("ORIGIN:", message)
+
+	print("----------------------------------------------\n\n")
+
+	ciphertext = encrypt(message, int(key,2))
+	print("CIPHER:", ciphertext)
+	plaintext = decrypt(ciphertext, int(key,2))
 	print("PLAIN: ", plaintext)
 	print("ORIGIN:", message)
