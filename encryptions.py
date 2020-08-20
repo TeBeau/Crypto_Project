@@ -1,6 +1,5 @@
 import math
 import random
-import SDES
 
 # Get primes from seperate file
 file = open("primes1.txt","r")

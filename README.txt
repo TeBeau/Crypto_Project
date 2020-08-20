@@ -1,16 +1,25 @@
 
-Run server.py
+First run server.py
 then run client.py
 
-Hand Shake / Key Exchange:
-- Use Diffie-Hellman protocol to accomplish this
+All the other files must be in the same directory
 
-After, server sends over public key n
-- client encrypts using Blum-Goldwasser
-- client also makes the MAC  				<------- Need to change to the better MAC in github
-- client sends message ('encryption', x_n) MAC = mac_encrypy
+In order to "sign in" to the ATM, need a name (represents card) and pin
+-- Possible sign in
+	-- Lauren 1013
+	-- Alex 9742
+	-- JJ 7959
+Must input exactly
 
-Server recieves the message
-- Decrypts the message
-- Verify that the MACs match
+
+After the client promps the user for 4 commands
+-- Deposit
+-- Withdraw
+-- Check Balance
+-- Quit
+Must give this input exactly
+
+If you choose Deposit or Withdraw, then you input the amount
+
+You get a reply from the bank and you are then prompted the same 4 commands again until you choose the Quit option
 

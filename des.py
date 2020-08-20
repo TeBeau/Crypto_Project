@@ -410,7 +410,6 @@ def decrypt3(m, k):
 	return bin_to_string(message)
 
 
-
 if __name__ == "__main__":
 
 	message = "1001011001101001010100010100101001101001101010101000000101101011"

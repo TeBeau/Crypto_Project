@@ -46,11 +46,11 @@ print()
 # Key Exchange for SSL
 key = Diffie_Hellman_Key_Exchange()
 
+# Get the suite from the client
 name = c.recv(1024).decode()
 c.send("recieved".encode())
 select = c.recv(1024).decode()
-print("Account:", name)
-print("Algo:", select)
+print(select)
 
 # Exchange n for Blum Gold
 # Send over bank's public key
@@ -101,7 +101,6 @@ while(True):
 			returnVal = bank.withdraw(round(float(msg[9:msg.index("-")-1]), 2))
 		elif msg[0:13] == "Check Balance":
 			returnVal = bank.queryBalance()
-			print(returnVal)
 		elif msg == "Quit":
 			send = "Quit"
 
