@@ -445,7 +445,7 @@ if __name__ == "__main__":
 	print("PLAIN: ", plaintext)
 	print("ORIGIN:", message)
 
-	print("----------------------------------------------\n\n")
+	print("-----------------------------------------------\n\n")
 
 	ciphertext = encrypt(message, int(key,2))
 	print("CIPHER:", ciphertext)
