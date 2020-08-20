@@ -1,5 +1,6 @@
 import random
 import encryptions as enc
+import mac
 
 # Usage: call the encrypt or the decrypt functions, with the message in regular string format, and the shared key between the client and the server (in int form)
 
@@ -225,16 +226,22 @@ def des(message, key, encryptFlag):
 	return final
 
 def encrypt(m, k):
+	random.seed(k)
+	iv = ""
+	for i in range(64):
+		iv += str(random.randint(0,1))
+
 	m = string_to_bin(m)
 
 	key = bin(k)[2:]
 	if len(key) > 64:
+		key = bin(mac.sha1(key))
 		key = key[len(key)-64:]
 	while len(key) < 64:
 		key = key + '0'
 
 	i = 0
-	message = ""
+	ciphertexts = [iv]
 	while True:
 		chunk = m[i*64:(i+1)*64]
 		if chunk == "" or chunk == " ":
@@ -247,29 +254,39 @@ def encrypt(m, k):
 			for j in range(num):
 				chunk += numString
 
-		cipher = des(chunk, key, True)
-		message += cipher
-		if (i+1)*64 > len(m):
-			break
+		cipher = des(xor(chunk, ciphertexts[i]), key, True)
+		ciphertexts.append(cipher)
+
 		i += 1
 
+	message = ""
+	for i in range(1, len(ciphertexts)):
+		message += ciphertexts[i]
 	return message
 
 def decrypt(m, k):
+	random.seed(k)
+	iv = ""
+	for i in range(64):
+		iv += str(random.randint(0,1))
+
 	key = bin(k)[2:]
 	if len(key) > 64:
+		key = bin(mac.sha1(key))
 		key = key[len(key)-64:]
 	while len(key) < 64:
 		key = key + '0'
 
 	i = 0
-	message = ""
+	ciphertexts = [iv]
+	plaintexts = []
 	while True:
 		plaintext = ""
 		chunk = m[i*64:(i+1)*64]
 		if chunk == "" or chunk == " ":
 			break
-		plain = des(chunk, key, False)
+		ciphertexts.append(chunk)
+		plain = xor(des(chunk, key, False), ciphertexts[i])
 
 		if (i+1)*64 >= len(m):
 			num = plain[56:64]
@@ -282,16 +299,18 @@ def decrypt(m, k):
 		else:
 			plaintext = plain
 
-		message += plaintext
+		plaintexts.append(plaintext)
 		i += 1
 
-	
-
+	message = ""
+	for i in range(len(plaintexts)):
+		message += plaintexts[i]
 	return bin_to_string(message)
 
 
 def encrypt3(m, k):
-	# seed the random generator with the key so that each key will always generate the same three 64-bit keys
+	# seed the random generator with the key so that each key 
+	# will always generate the same three 64-bit keys
 	random.seed(k)
 
 	m = string_to_bin(m)
@@ -303,28 +322,41 @@ def encrypt3(m, k):
 			tempKey += str(random.randint(0,1))
 		keys.append(tempKey)
 
+	iv = ""
+	for i in range(64):
+		iv += str(random.randint(0,1))
+
+	# create list of ciphertexts starting with initial vector
 	i = 0
-	message = ""
+	ciphertexts = [iv]
 	while True:
 		chunk = m[i*64:(i+1)*64]
-		if chunk == "" or chunk == " ":
+		if chunk == "":
 			break
 
+		# do PKCS#5 padding if less than 64 bit message chunk
 		if len(chunk) < 64:
 			num = (64 - len(chunk))//8
 			numString = bin(num)[2:].zfill(8)
 			
 			for j in range(num):
 				chunk += numString
+
+		# xor with previous cipher or IV before encryption
+		chunk = xor(chunk, ciphertexts[i])
 			
+		# encrypt decrypt encrypt
 		step1 = des(chunk, keys[0], True)
 		step2 = des(step1, keys[1], False)
 		step3 = des(step2, keys[2], True)
 
-		message += step3
-		if (i+1)*64 > len(m):
-			break
+		ciphertexts.append(step3)
+
 		i += 1
+
+	message = ""
+	for i in range(1, len(ciphertexts)):
+		message += ciphertexts[i]
 
 	return message
 
@@ -338,17 +370,25 @@ def decrypt3(m, k):
 			tempKey += str(random.randint(0,1))
 		keys.append(tempKey)
 
+	iv = ""
+	for i in range(64):
+		iv += str(random.randint(0,1)) 
+
 	i = 0
-	message = ""
+	ciphertexts = [iv]
+	plaintexts = []
 	while True:
 		plaintext = ""
 		chunk = m[i*64:(i+1)*64]
 		if chunk == "" or chunk == " ":
 			break
+		ciphertexts.append(chunk)
 
 		step1 = des(chunk, keys[2], False)
 		step2 = des(step1, keys[1], True)
 		step3 = des(step2, keys[0], False)
+
+		step3 = xor(step3, ciphertexts[i])
 
 		if (i+1)*64 >= len(m):
 			num = step3[56:64]
@@ -361,9 +401,12 @@ def decrypt3(m, k):
 		else:
 			plaintext = step3
 
-		message += plaintext
+		plaintexts.append(plaintext)
 		i += 1
 
+	message = ""
+	for i in range(len(plaintexts)):
+		message += plaintexts[i]
 	return bin_to_string(message)
 
 
@@ -372,7 +415,7 @@ if __name__ == "__main__":
 
 	message = "1001011001101001010100010100101001101001101010101000000101101011"
 
-	key     = "1001001010111011110110100010110100110101011011101001001010010000"
+	key     = "1001001010111011110110100010110100110101011011101001001010010000101100101101101010111010"
 	
 
 	message = "cryptozz"
@@ -384,9 +427,9 @@ if __name__ == "__main__":
 	
 	print("----------------------------------------------\n\n")
 
-	message = "cryptography is hard"
-	print(string_to_bin(message))
-	print(bin_to_string(string_to_bin(message)))
+	message = "mac 1100101"
+	#print(string_to_bin(message))
+	#print(bin_to_string(string_to_bin(message)))
 
 
 	print("PLAIN: ", string_to_bin(message))

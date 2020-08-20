@@ -1,5 +1,11 @@
 import encryptions as enc
 
+def string_to_bin(string):
+	binStr = ""
+	for i in string:
+		binStr += bin(ord(i))[2:].zfill(8)
+	return binStr
+
 #helper function to split message into chunks of n size
 def createMessageChunks(message, n):
 	word_list = []
@@ -34,7 +40,7 @@ def sha1(message):
 	m1 = len(message)
 	message = message + '1'
 
-	# append bit '0' to the message until its length modulo 448 = 0 and then 
+	# append bit '0' to the message until its length modulo 512 = 0 and then 
 	while (len(message) + len(bin(m1)[2:])) % 512 != 0:
 		message = message + '0'
 	# append the length of the message in binary form
@@ -93,26 +99,30 @@ def sha1(message):
 # main function to receive an HMAC, call with a key and the message to authenticate
 # should only be calling this function from any other classes, all the others in this class are helper functions
 def mac(message, keyInt):
-	message = ""
-	for i in enc.convert_string_to_binary(message):
-		message = message + i
-	print(message)
+	#m = string_to_bin(message)
+	m = message
+
 	# convert key to binary and message to binary
 	k = bin(keyInt)[2:]
 
 	# if key is longer than block size(64) then hash it
 	if len(k) > 64:
-		sha1(k)
+		k = bin(sha1(k))[2:]
+		k = k[len(k)-64:]
 
 	# pad key with 0's on the right if shorter than key size
 	while len(k) < 64:
 		k = k + '0'
 
 	# hard code outer and inner pad values
-	# 8 repeated bytes of 0x5c
-	oPad = '0101110001011100010111000101110001011100010111000101110001011100'
-	# 8 repeated bytes of 0x3c
-	iPad = '0011011000110110001101100011011000110110001101100011011000110110'
+	# len(message) repeated bytes of 0x5c
+	oPad = ""
+	for i in range(len(message)):
+		oPad += "01011100"
+	# len(message) repeated bytes of 0x3c
+	iPad = ""
+	for i in range(len(message)):
+		iPad += "00110110"
 
 	# xor key with corresponding pad  (both in int form) and convert back to binary string
 	oPadKey = int(k, 2) ^ int(oPad, 2)
@@ -121,12 +131,9 @@ def mac(message, keyInt):
 	iPadKey = int(k, 2) ^ int(iPad, 2)
 	iPadKey = bin(iPadKey)[2:]
 
-	#print(iPadKey)
-	#print(message)
-
 	# The HMAC is the hash of the outer key concatenated with 
 	# the hash of the inner key concatenated with the message
-	innerConcatenate = bin(sha1(iPadKey + message))[2:]
+	innerConcatenate = bin(sha1(iPadKey + m))[2:]
 	return bin(sha1(oPadKey + innerConcatenate))[2:]
 
 if __name__ == "__main__":
@@ -143,6 +150,13 @@ if __name__ == "__main__":
 
 	#print(bin(mac(0, "0"))[2:])
 
-	ans = mac("0", 0)
+	message = "1010100110101101001001000010101101010111010101100101010101110111100100101010110101011101011010110101101010010101101010110110001011001000010111010101101011101101"
+	print(len(message))
+
+	ans = bin(sha1(message))[2:]
 	print(ans)
 	print(len(ans))
+
+	ans2 = bin(sha1(ans))[2:]
+	print(ans2)
+	print(len(ans2))
