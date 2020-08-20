@@ -99,8 +99,7 @@ def sha1(message):
 # main function to receive an HMAC, call with a key and the message to authenticate
 # should only be calling this function from any other classes, all the others in this class are helper functions
 def mac(message, keyInt):
-	#m = string_to_bin(message)
-	m = message
+	m = string_to_bin(message)
 
 	# convert key to binary and message to binary
 	k = bin(keyInt)[2:]
